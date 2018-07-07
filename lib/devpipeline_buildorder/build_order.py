@@ -1,69 +1,10 @@
 #!/usr/bin/python3
 """This modules generates a build ordered list of targets."""
 
-import re
-import sys
-
 import devpipeline_core.config.config
 import devpipeline_core.command
+import devpipeline_core.plugin
 import devpipeline_core.resolve
-
-
-def _dotify(string):
-    """This function swaps '-' for '_'."""
-    return re.sub("-", lambda m: "_", string)
-
-
-def _do_dot(targets, components, layer_fn):
-    def _handle_layer_dependencies(resolved_dependencies, attributes):
-        for component in resolved_dependencies:
-            stripped_name = _dotify(component)
-            component_dependencies = components[component].get("depends")
-            if component_dependencies:
-                for dep in devpipeline_core.config.config.split_list(
-                        component_dependencies):
-                    print("{} -> {} {}".format(stripped_name,
-                                               _dotify(dep), attributes))
-            print("{} {}".format(stripped_name, attributes))
-
-    print("digraph dependencies {")
-    try:
-        devpipeline_core.resolve.process_dependencies(
-            targets, components, lambda rd: layer_fn(
-                rd, lambda rd: _handle_layer_dependencies(
-                    rd, "")))
-    except devpipeline_core.resolve.CircularDependencyException as cde:
-        layer_fn(
-            cde._components,
-            lambda rd: _handle_layer_dependencies(
-                rd, "[color=\"red\"]"))
-    print("}")
-
-
-def _print_graph(targets, components):
-    # pylint: disable=protected-access
-    _do_dot(targets, components, lambda rd, dep_fn: dep_fn(rd))
-
-
-def _print_dot(targets, components):
-    print("Warning: dot option is deprecated.  Use graph instead.",
-          file=sys.stderr)
-    _print_graph(targets, components)
-
-
-def _print_layers(targets, components):
-    layer = 0
-
-    def _add_layer(resolved_dependencies, dep_fn):
-        nonlocal layer
-
-        print("subgraph cluster_{} {{".format(layer))
-        print("label=\"Layer {}\"".format(layer))
-        dep_fn(resolved_dependencies)
-        print("}")
-        layer += 1
-
-    _do_dot(targets, components, _add_layer)
 
 
 def _print_list(targets, components):
@@ -71,12 +12,14 @@ def _print_list(targets, components):
     print(build_order)
 
 
-_ORDER_OUTPUTS = {
-    "dot": _print_dot,
-    "graph": _print_graph,
-    "layer": _print_layers,
-    "list": _print_list,
-}
+_ORDER_OUTPUTS = None
+
+
+def _initialize_outputs():
+    global _ORDER_OUTPUTS
+
+    if not _ORDER_OUTPUTS:
+        _ORDER_OUTPUTS = devpipeline_core.plugin.query_plugins('devpipeline.build_order.methods')
 
 
 class BuildOrderer(devpipeline_core.command.TargetTool):
@@ -90,15 +33,12 @@ class BuildOrderer(devpipeline_core.command.TargetTool):
                                      "targets and the order they should be "
                                      "built in.")
         self.add_argument("--method",
-                          help="The method used to display build order.  Valid"
-                               " options are list (an order to resolve "
-                               "specified targets), dot (a dot graph), and "
-                               "layer (a dot graph that groups components "
-                               "into layers based on their dependencies)..",
+                          help="The method used to display build order.",
                           default="list")
         self.helper_fn = None
 
     def setup(self, arguments):
+        _initialize_outputs()
         self.helper_fn = _ORDER_OUTPUTS.get(arguments.method)
         if not self.helper_fn:
             raise Exception("Invalid method: {}".format(arguments.method))

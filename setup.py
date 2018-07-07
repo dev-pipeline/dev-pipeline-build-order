@@ -17,6 +17,13 @@ setup(
     entry_points={
         'devpipeline.drivers': [
             'build-order = devpipeline_buildorder.build_order:main'
+        ],
+
+        'devpipeline.build_order.methods': [
+            'dot = devpipeline_buildorder.dot:print_dot',
+            'graph = devpipeline_buildorder.dot:print_graph',
+            'layers = devpipeline_buildorder.dot:print_layers',
+            'list = devpipeline_buildorder.build_order:_print_list'
         ]
     },
 
