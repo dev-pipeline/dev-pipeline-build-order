@@ -26,13 +26,12 @@ def _list_methods(targets, components):
         print(key)
 
 
-class BuildOrderer(devpipeline_core.command.TargetTool):
+class BuildOrderer(devpipeline_core.command.TargetCommand):
 
     """This class outputs an ordered list of the packages to satisfy dependencies."""
 
     def __init__(self):
-        super().__init__(executors=False,
-                         prog="dev-pipeline build-order",
+        super().__init__(prog="dev-pipeline build-order",
                          description="Determinte all dependencies of a set of "
                                      "targets and the order they should be "
                                      "built in.")
@@ -59,7 +58,7 @@ class BuildOrderer(devpipeline_core.command.TargetTool):
 def main(args=None):
     # pylint: disable=missing-docstring
     build_orderer = BuildOrderer()
-    devpipeline_core.command.execute_tool(build_orderer, args)
+    devpipeline_core.command.execute_command(build_orderer, args)
 
 
 if __name__ == '__main__':
