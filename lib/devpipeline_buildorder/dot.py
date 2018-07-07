@@ -1,5 +1,9 @@
 #!/usr/bin/python3
 
+"""
+Output methods that use dot syntax to represent dependency information.
+"""
+
 import re
 import sys
 
@@ -38,6 +42,18 @@ def _do_dot(targets, components, layer_fn):
 
 
 def print_layers(targets, components):
+    """
+    Print dependency information, grouping components based on their position
+    in the dependency graph.  Components with no dependnecies will be in layer
+    0, components that only depend on layer 0 will be in layer 1, and so on.
+
+    If there's a circular dependency, those nodes and their dependencies will
+    be colored red.
+
+    Arguments
+    targets - the targets explicitly requested
+    components - full configuration for all components in a project
+    """
     layer = 0
 
     def _add_layer(resolved_dependencies, dep_fn):
@@ -53,11 +69,28 @@ def print_layers(targets, components):
 
 
 def print_graph(targets, components):
-    # pylint: disable=protected-access
+    """
+    Print dependency information using a dot directed graph.  The graph will
+    contain explicitly requested targets plus any dependencies.
+
+    If there's a circular dependency, those nodes and their dependencies will
+    be colored red.
+
+    Arguments
+    targets - the targets explicitly requested
+    components - full configuration for all components in a project
+    """
     _do_dot(targets, components, lambda rd, dep_fn: dep_fn(rd))
 
 
 def print_dot(targets, components):
+    """
+    Deprecated function; use print_graph.
+
+    Arguments
+    targets - the targets explicitly requested
+    components - full configuration for all components in a project
+    """
     print("Warning: dot option is deprecated.  Use graph instead.",
           file=sys.stderr)
     print_graph(targets, components)

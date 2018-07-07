@@ -8,21 +8,20 @@ import devpipeline_core.resolve
 
 
 def _print_list(targets, components):
-    build_order = devpipeline_core.resolve.order_dependencies(targets, components)
+    build_order = devpipeline_core.resolve.order_dependencies(
+        targets, components)
     print(build_order)
 
 
-_ORDER_OUTPUTS = None
-
-
-def _initialize_outputs():
-    global _ORDER_OUTPUTS
-
-    if not _ORDER_OUTPUTS:
-        _ORDER_OUTPUTS = devpipeline_core.plugin.query_plugins('devpipeline.build_order.methods')
+_ORDER_OUTPUTS = devpipeline_core.plugin.query_plugins(
+    'devpipeline.build_order.methods')
 
 
 def _list_methods(targets, components):
+    # neither argument is required
+    del targets
+    del components
+
     for key in _ORDER_OUTPUTS:
         print(key)
 
@@ -46,7 +45,6 @@ class BuildOrderer(devpipeline_core.command.TargetTool):
         self.helper_fn = None
 
     def setup(self, arguments):
-        _initialize_outputs()
         if arguments.list_methods:
             self.helper_fn = _list_methods
         else:
