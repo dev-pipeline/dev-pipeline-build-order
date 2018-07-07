@@ -60,6 +60,7 @@ def main(args=None):
     build_orderer = BuildOrderer()
     devpipeline_core.command.execute_command(build_orderer, args)
 
+_BUILD_ORDER_COMMAND = (main, "Generate dependency information about project components.")
 
 if __name__ == '__main__':
     main()

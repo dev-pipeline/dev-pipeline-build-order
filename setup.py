@@ -16,7 +16,7 @@ setup(
 
     entry_points={
         'devpipeline.drivers': [
-            'build-order = devpipeline_buildorder.build_order:main'
+            'build-order = devpipeline_buildorder.build_order:_BUILD_ORDER_COMMAND'
         ],
 
         'devpipeline.build_order.methods': [
