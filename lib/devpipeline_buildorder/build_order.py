@@ -22,6 +22,11 @@ def _initialize_outputs():
         _ORDER_OUTPUTS = devpipeline_core.plugin.query_plugins('devpipeline.build_order.methods')
 
 
+def _list_methods(targets, components):
+    for key in _ORDER_OUTPUTS:
+        print(key)
+
+
 class BuildOrderer(devpipeline_core.command.TargetTool):
 
     """This class outputs an ordered list of the packages to satisfy dependencies."""
@@ -35,13 +40,19 @@ class BuildOrderer(devpipeline_core.command.TargetTool):
         self.add_argument("--method",
                           help="The method used to display build order.",
                           default="list")
+        self.add_argument("--list-methods", action='store_true',
+                          help="List the available methods instead of printing"
+                               " dependency information.")
         self.helper_fn = None
 
     def setup(self, arguments):
         _initialize_outputs()
-        self.helper_fn = _ORDER_OUTPUTS.get(arguments.method)
-        if not self.helper_fn:
-            raise Exception("Invalid method: {}".format(arguments.method))
+        if arguments.list_methods:
+            self.helper_fn = _list_methods
+        else:
+            self.helper_fn = _ORDER_OUTPUTS.get(arguments.method)
+            if not self.helper_fn:
+                raise Exception("Invalid method: {}".format(arguments.method))
 
     def process(self):
         self.helper_fn(self.targets, self.components)
