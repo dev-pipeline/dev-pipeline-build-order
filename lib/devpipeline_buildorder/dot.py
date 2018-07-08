@@ -35,7 +35,7 @@ def _do_dot(targets, components, layer_fn):
                     rd, "")))
     except devpipeline_core.resolve.CircularDependencyException as cde:
         layer_fn(
-            cde._components,
+            cde.components,
             lambda rd: _handle_layer_dependencies(
                 rd, "[color=\"red\"]"))
     print("}")
@@ -70,7 +70,9 @@ def _print_layers(targets, components):
 
 _LAYERS_TOOL = (
     _print_layers,
-    "Print a dot graph that groups components by their position in a layered architecture.  Components are only permitted to depend on layers with a lower number.")
+    "Print a dot graph that groups components by their position in a layered "
+    "architecture.  Components are only permitted to depend on layers with a "
+    "lower number.")
 
 
 def _print_graph(targets, components):
@@ -90,7 +92,8 @@ def _print_graph(targets, components):
 
 _GRAPH_TOOL = (
     _print_graph,
-    "Print a dot graph where each component points at its dependnet components.")
+    "Print a dot graph where each component points at its dependnet "
+    "components.")
 
 
 def _print_dot(targets, components):
@@ -103,7 +106,7 @@ def _print_dot(targets, components):
     """
     print("Warning: dot option is deprecated.  Use graph instead.",
           file=sys.stderr)
-    print_graph(targets, components)
+    _print_graph(targets, components)
 
 
 _DOT_TOOL = (_print_dot, "Deprecated -- use the \"graph\" option instead.")

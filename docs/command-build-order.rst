@@ -21,7 +21,7 @@ Options
   -h, --help       show this help message and exit
   --method METHOD  The method used to display build order. (default: list)
   --list-methods   List the available methods instead of printing dependency
-                   information. (default: False)
+                   information.
 
 
 Available Methods
