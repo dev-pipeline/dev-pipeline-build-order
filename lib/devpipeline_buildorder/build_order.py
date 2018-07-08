@@ -34,7 +34,8 @@ class BuildOrderer(devpipeline_core.command.TargetCommand):
         self.add_argument("--method",
                           help="The method used to display build order.",
                           default="list")
-        self.add_argument("--list-methods", action='store_true', default=argparse.SUPPRESS,
+        self.add_argument("--list-methods", action='store_true',
+                          default=argparse.SUPPRESS,
                           help="List the available methods instead of printing"
                                " dependency information.")
         self.helper_fn = None
