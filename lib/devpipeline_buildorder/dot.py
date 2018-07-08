@@ -41,7 +41,7 @@ def _do_dot(targets, components, layer_fn):
     print("}")
 
 
-def print_layers(targets, components):
+def _print_layers(targets, components):
     """
     Print dependency information, grouping components based on their position
     in the dependency graph.  Components with no dependnecies will be in layer
@@ -68,7 +68,12 @@ def print_layers(targets, components):
     _do_dot(targets, components, _add_layer)
 
 
-def print_graph(targets, components):
+_LAYERS_TOOL = (
+    _print_layers,
+    "Print a dot graph that groups components by their position in a layered architecture.  Components are only permitted to depend on layers with a lower number.")
+
+
+def _print_graph(targets, components):
     """
     Print dependency information using a dot directed graph.  The graph will
     contain explicitly requested targets plus any dependencies.
@@ -83,7 +88,12 @@ def print_graph(targets, components):
     _do_dot(targets, components, lambda rd, dep_fn: dep_fn(rd))
 
 
-def print_dot(targets, components):
+_GRAPH_TOOL = (
+    _print_graph,
+    "Print a dot graph where each component points at its dependnet components.")
+
+
+def _print_dot(targets, components):
     """
     Deprecated function; use print_graph.
 
@@ -94,3 +104,6 @@ def print_dot(targets, components):
     print("Warning: dot option is deprecated.  Use graph instead.",
           file=sys.stderr)
     print_graph(targets, components)
+
+
+_DOT_TOOL = (_print_dot, "Deprecated -- use the \"graph\" option instead.")

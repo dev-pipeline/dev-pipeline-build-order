@@ -1,16 +1,12 @@
 #!/usr/bin/python3
 """This modules generates a build ordered list of targets."""
 
+import argparse
+
 import devpipeline_core.config.config
 import devpipeline_core.command
 import devpipeline_core.plugin
 import devpipeline_core.resolve
-
-
-def _print_list(targets, components):
-    build_order = devpipeline_core.resolve.order_dependencies(
-        targets, components)
-    print(build_order)
 
 
 _ORDER_OUTPUTS = devpipeline_core.plugin.query_plugins(
@@ -22,8 +18,8 @@ def _list_methods(targets, components):
     del targets
     del components
 
-    for key in _ORDER_OUTPUTS:
-        print(key)
+    for key in sorted(_ORDER_OUTPUTS):
+        print("{} - {}".format(key, _ORDER_OUTPUTS[key][1]))
 
 
 class BuildOrderer(devpipeline_core.command.TargetCommand):
@@ -38,18 +34,19 @@ class BuildOrderer(devpipeline_core.command.TargetCommand):
         self.add_argument("--method",
                           help="The method used to display build order.",
                           default="list")
-        self.add_argument("--list-methods", action='store_true',
+        self.add_argument("--list-methods", action='store_true', default=argparse.SUPPRESS,
                           help="List the available methods instead of printing"
                                " dependency information.")
         self.helper_fn = None
 
     def setup(self, arguments):
-        if arguments.list_methods:
+        if "list_methods" in arguments:
             self.helper_fn = _list_methods
         else:
-            self.helper_fn = _ORDER_OUTPUTS.get(arguments.method)
-            if not self.helper_fn:
+            build_order = _ORDER_OUTPUTS.get(arguments.method)
+            if not build_order:
                 raise Exception("Invalid method: {}".format(arguments.method))
+            self.helper_fn = build_order[0]
 
     def process(self):
         self.helper_fn(self.targets, self.components)
@@ -60,7 +57,9 @@ def main(args=None):
     build_orderer = BuildOrderer()
     devpipeline_core.command.execute_command(build_orderer, args)
 
-_BUILD_ORDER_COMMAND = (main, "Generate dependency information about project components.")
+
+_BUILD_ORDER_COMMAND = (
+    main, "Generate dependency information about project components.")
 
 if __name__ == '__main__':
     main()
