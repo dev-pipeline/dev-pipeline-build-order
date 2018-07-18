@@ -16,27 +16,29 @@ def _dotify(string):
 
 
 def _do_dot(targets, components, layer_fn):
-    def _handle_layer_dependencies(resolved_dependencies, attributes):
+    def _handle_layer_dependencies(resolved_dependencies, indent, attributes):
         for attribute in attributes:
-            print(attribute)
+            print(indent + attribute)
         for component in resolved_dependencies:
             stripped_name = _dotify(component)
+            print(indent + stripped_name)
             component_dependencies = components[component].get("depends")
             if component_dependencies:
                 for dep in devpipeline_core.config.config.split_list(
                         component_dependencies):
-                    print("{} -> {}".format(stripped_name, _dotify(dep)))
-            print(stripped_name)
+                    print("{}{} -> {}".format(indent, stripped_name,
+                                              _dotify(dep)))
 
     print("digraph dependencies {")
     try:
         devpipeline_core.resolve.process_dependencies(
             targets, components, lambda rd: layer_fn(
-                rd, lambda rd: _handle_layer_dependencies(rd, [])))
+                rd, lambda rd, indent: _handle_layer_dependencies(rd, indent,
+                                                                  [])))
     except devpipeline_core.resolve.CircularDependencyException as cde:
         layer_fn(
             cde.components,
-            lambda rd: _handle_layer_dependencies(rd, [
+            lambda rd, indent: _handle_layer_dependencies(rd, indent, [
                 'edge [color="red"]',
                 'node [color="red"]'
             ]))
@@ -61,10 +63,11 @@ def _print_layers(targets, components):
     def _add_layer(resolved_dependencies, dep_fn):
         nonlocal layer
 
-        print("subgraph cluster_{} {{".format(layer))
-        print("label=\"Layer {}\"".format(layer))
-        dep_fn(resolved_dependencies)
-        print("}")
+        indentation = " " * 4
+        print("{}subgraph cluster_{} {{".format(indentation, layer))
+        print("{}label=\"Layer {}\"".format(indentation * 2, layer))
+        dep_fn(resolved_dependencies, indentation * 2)
+        print("{}}}".format(indentation))
         layer += 1
 
     _do_dot(targets, components, _add_layer)
@@ -89,7 +92,8 @@ def _print_graph(targets, components):
     targets - the targets explicitly requested
     components - full configuration for all components in a project
     """
-    _do_dot(targets, components, lambda rd, dep_fn: dep_fn(rd))
+    indentation = " " * 4
+    _do_dot(targets, components, lambda rd, dep_fn: dep_fn(rd, indentation))
 
 
 _GRAPH_TOOL = (
