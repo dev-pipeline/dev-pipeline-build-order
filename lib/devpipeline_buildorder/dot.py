@@ -17,27 +17,29 @@ def _dotify(string):
 
 def _do_dot(targets, components, layer_fn):
     def _handle_layer_dependencies(resolved_dependencies, attributes):
+        for attribute in attributes:
+            print(attribute)
         for component in resolved_dependencies:
             stripped_name = _dotify(component)
             component_dependencies = components[component].get("depends")
             if component_dependencies:
                 for dep in devpipeline_core.config.config.split_list(
                         component_dependencies):
-                    print("{} -> {} {}".format(stripped_name,
-                                               _dotify(dep), attributes))
-            print("{} {}".format(stripped_name, attributes))
+                    print("{} -> {}".format(stripped_name, _dotify(dep)))
+            print(stripped_name)
 
     print("digraph dependencies {")
     try:
         devpipeline_core.resolve.process_dependencies(
             targets, components, lambda rd: layer_fn(
-                rd, lambda rd: _handle_layer_dependencies(
-                    rd, "")))
+                rd, lambda rd: _handle_layer_dependencies(rd, [])))
     except devpipeline_core.resolve.CircularDependencyException as cde:
         layer_fn(
             cde.components,
-            lambda rd: _handle_layer_dependencies(
-                rd, "[color=\"red\"]"))
+            lambda rd: _handle_layer_dependencies(rd, [
+                'edge [color="red"]',
+                'node [color="red"]'
+            ]))
     print("}")
 
 
