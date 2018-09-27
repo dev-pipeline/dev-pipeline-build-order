@@ -22,6 +22,13 @@ def _list_methods(targets, components):
         print("{} - {}".format(key, _ORDER_OUTPUTS[key][1]))
 
 
+_MAJOR = 0
+_MINOR = 2
+_PATCH = 0
+
+_STRING = "{}.{}.{}".format(_MAJOR, _MINOR, _PATCH)
+
+
 class BuildOrderer(devpipeline_core.command.TargetCommand):
 
     """This class outputs an ordered list of the packages to satisfy dependencies."""
@@ -38,6 +45,7 @@ class BuildOrderer(devpipeline_core.command.TargetCommand):
                           default=argparse.SUPPRESS,
                           help="List the available methods instead of printing"
                                " dependency information.")
+        self.set_version(_STRING)
         self.helper_fn = None
 
     def setup(self, arguments):
