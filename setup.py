@@ -14,6 +14,7 @@ setup(
     packages=find_packages("lib"),
 
     install_requires=[
+        'dev-pipeline-configure >= 0.3.0',
         'dev-pipeline-core >= 0.3.0'
     ],
 

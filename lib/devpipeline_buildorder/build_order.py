@@ -7,6 +7,7 @@ import devpipeline_core.config.config
 import devpipeline_core.command
 import devpipeline_core.plugin
 import devpipeline_core.resolve
+import devpipeline_configure.cache
 
 
 _ORDER_OUTPUTS = devpipeline_core.plugin.query_plugins(
@@ -33,8 +34,9 @@ class BuildOrderer(devpipeline_core.command.TargetCommand):
 
     """This class outputs an ordered list of the packages to satisfy dependencies."""
 
-    def __init__(self):
-        super().__init__(prog="dev-pipeline build-order",
+    def __init__(self, config_fn):
+        super().__init__(config_fn=config_fn,
+                         prog="dev-pipeline build-order",
                          description="Determinte all dependencies of a set of "
                                      "targets and the order they should be "
                                      "built in.")
@@ -61,9 +63,9 @@ class BuildOrderer(devpipeline_core.command.TargetCommand):
         self.helper_fn(self.targets, self.components)
 
 
-def main(args=None):
+def main(args=None, config_fn=devpipeline_configure.cache.update_cache):
     # pylint: disable=missing-docstring
-    build_orderer = BuildOrderer()
+    build_orderer = BuildOrderer(config_fn)
     devpipeline_core.command.execute_command(build_orderer, args)
 
 
