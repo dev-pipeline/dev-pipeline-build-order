@@ -3,7 +3,6 @@
 
 import argparse
 
-import devpipeline_core.config.config
 import devpipeline_core.command
 import devpipeline_core.plugin
 import devpipeline_core.resolve
