@@ -22,12 +22,10 @@ def _do_dot(targets, components, layer_fn):
         for component in resolved_dependencies:
             stripped_name = _dotify(component)
             print(indent + stripped_name)
-            component_dependencies = components[component].get("depends")
-            if component_dependencies:
-                for dep in devpipeline_core.config.config.split_list(
-                        component_dependencies):
-                    print("{}{} -> {}".format(indent, stripped_name,
-                                              _dotify(dep)))
+            component_dependencies = components.get(
+                component).get_list("depends")
+            for dep in component_dependencies:
+                print("{}{} -> {}".format(indent, stripped_name, _dotify(dep)))
 
     print("digraph dependencies {")
     try:
