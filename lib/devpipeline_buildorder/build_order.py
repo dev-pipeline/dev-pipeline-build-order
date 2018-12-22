@@ -10,7 +10,8 @@ import devpipeline_configure.cache
 
 
 _ORDER_OUTPUTS = devpipeline_core.plugin.query_plugins(
-    'devpipeline.build_order.methods')
+    "devpipeline.build_order.methods"
+)
 
 
 def _list_methods(targets, components):
@@ -34,18 +35,20 @@ class BuildOrderer(devpipeline_core.command.TargetCommand):
     """This class outputs an ordered list of the packages to satisfy dependencies."""
 
     def __init__(self, config_fn):
-        super().__init__(config_fn=config_fn,
-                         prog="dev-pipeline build-order",
-                         description="Determinte all dependencies of a set of "
-                                     "targets and the order they should be "
-                                     "built in.")
-        self.add_argument("--method",
-                          help="The method used to display build order.",
-                          default="list")
-        self.add_argument("--list-methods", action='store_true',
-                          default=argparse.SUPPRESS,
-                          help="List the available methods instead of printing"
-                               " dependency information.")
+        super().__init__(
+            config_fn=config_fn,
+            prog="dev-pipeline build-order",
+            description="Determinte all dependencies of a set of targets and the order they should be built in.",
+        )
+        self.add_argument(
+            "--method", help="The method used to display build order.", default="list"
+        )
+        self.add_argument(
+            "--list-methods",
+            action="store_true",
+            default=argparse.SUPPRESS,
+            help="List the available methods instead of printing dependency information.",
+        )
         self.set_version(_STRING)
         self.helper_fn = None
 
@@ -69,7 +72,9 @@ def main(args=None, config_fn=devpipeline_configure.cache.update_cache):
 
 
 _BUILD_ORDER_COMMAND = (
-    main, "Generate dependency information about project components.")
+    main,
+    "Generate dependency information about project components.",
+)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
