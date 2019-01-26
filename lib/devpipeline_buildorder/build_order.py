@@ -59,7 +59,7 @@ class BuildOrderer(devpipeline_core.command.TargetCommand):
             build_order = _ORDER_OUTPUTS.get(arguments.method)
             if not build_order:
                 raise Exception("Invalid method: {}".format(arguments.method))
-            self.helper_fn = build_order[0]
+            self.helper_fn = lambda *args: build_order[0](*args, ["build"])
 
     def process(self):
         self.helper_fn(self.targets, self.components)

@@ -15,7 +15,7 @@ def _dotify(string):
     return re.sub("-", lambda m: "_", string)
 
 
-def _do_dot(targets, components, layer_fn):
+def _do_dot(targets, components, tasks, layer_fn):
     def _handle_layer_dependencies(resolved_dependencies, indent, attributes):
         for attribute in attributes:
             print(indent + attribute)
@@ -26,6 +26,7 @@ def _do_dot(targets, components, layer_fn):
             for dep in component_dependencies:
                 print("{}{} -> {}".format(indent, stripped_name, _dotify(dep)))
 
+    del tasks
     print("digraph dependencies {")
     try:
         devpipeline_core.resolve.process_dependencies(
@@ -45,7 +46,7 @@ def _do_dot(targets, components, layer_fn):
     print("}")
 
 
-def _print_layers(targets, components):
+def _print_layers(targets, components, tasks):
     """
     Print dependency information, grouping components based on their position
     in the dependency graph.  Components with no dependnecies will be in layer
@@ -70,7 +71,7 @@ def _print_layers(targets, components):
         print("{}}}".format(indentation))
         layer += 1
 
-    _do_dot(targets, components, _add_layer)
+    _do_dot(targets, components, tasks, _add_layer)
 
 
 _LAYERS_TOOL = (
@@ -81,7 +82,7 @@ _LAYERS_TOOL = (
 )
 
 
-def _print_graph(targets, components):
+def _print_graph(targets, components, tasks):
     """
     Print dependency information using a dot directed graph.  The graph will
     contain explicitly requested targets plus any dependencies.
@@ -94,7 +95,7 @@ def _print_graph(targets, components):
     components - full configuration for all components in a project
     """
     indentation = " " * 4
-    _do_dot(targets, components, lambda rd, dep_fn: dep_fn(rd, indentation))
+    _do_dot(targets, components, tasks, lambda rd, dep_fn: dep_fn(rd, indentation))
 
 
 _GRAPH_TOOL = (
@@ -103,7 +104,7 @@ _GRAPH_TOOL = (
 )
 
 
-def _print_dot(targets, components):
+def _print_dot(targets, components, tasks):
     """
     Deprecated function; use print_graph.
 
@@ -112,7 +113,7 @@ def _print_dot(targets, components):
     components - full configuration for all components in a project
     """
     print("Warning: dot option is deprecated.  Use graph instead.", file=sys.stderr)
-    _print_graph(targets, components)
+    _print_graph(targets, components, tasks)
 
 
 _DOT_TOOL = (_print_dot, 'Deprecated -- use the "graph" option instead.')
