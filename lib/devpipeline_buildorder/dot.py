@@ -16,53 +16,49 @@ def _dotify(string):
 
 
 def _do_dot(targets, components, tasks, layer_fn):
-    def _handle_layer_dependencies(resolved_dependencies, indent, attributes):
-        for attribute in attributes:
-            print(indent + attribute)
-        for component in resolved_dependencies:
-            stripped_name = _dotify(component)
-            print(indent + stripped_name)
-            component_dependencies = components.get(component).get_list("depends")
-            for dep in component_dependencies:
-                print("{}{} -> {}".format(indent, stripped_name, _dotify(dep)))
-
     print("digraph dependencies {")
     try:
+
         def _make_attribute_fn():
             if len(tasks) > 1:
                 return lambda component_task: ' [label="{}"]'.format(component_task[1])
             return lambda component_task: ""
 
-        def _print_dependency(component_task, dependent_task, attribute_fn):
+        def _print_dependency(
+            indentation, component_task, dependent_task, attribute_fn
+        ):
             if component_task[0] != dependent_task[0]:
-                print("    {} -> {}{}".format(_dotify(component_task[0]), _dotify(dependency_task[0]), attribute_fn(component_task)))
+                print(
+                    "{}{} -> {}{}".format(
+                        indentation,
+                        _dotify(component_task[0]),
+                        _dotify(dependent_task[0]),
+                        attribute_fn(component_task),
+                    )
+                )
 
         attribute_fn = _make_attribute_fn()
         dm = devpipeline_core.resolve.calculate_dependencies(targets, components, tasks)
-        task_queue = dm.get_queue()
-        for component_tasks in task_queue:
+
+        def _print_dependencies(indentation, component_tasks):
             for component_task in component_tasks:
                 dependencies = dm.get_dependencies(component_task)
                 if dependencies:
                     for dependency_task in dependencies:
-                        _print_dependency(component_task, dependency_task, attribute_fn)
+                        _print_dependency(
+                            indentation, component_task, dependency_task, attribute_fn
+                        )
                 else:
-                    print("    {}".format(_dotify(component_task[0])))
+                    print("{}{}".format(indentation, _dotify(component_task[0])))
                 task_queue.resolve(component_task)
-        #devpipeline_core.resolve.process_dependencies(
-            #targets,
-            #components,
-            #lambda rd: layer_fn(
-                #rd, lambda rd, indent: _handle_layer_dependencies(rd, indent, [])
-            #),
-        #)
+
+        task_queue = dm.get_queue()
+        for component_tasks in task_queue:
+            layer_fn(
+                lambda indentation: _print_dependencies(indentation, component_tasks)
+            )
     except devpipeline_core.resolve.CircularDependencyException as cde:
-        layer_fn(
-            cde.components,
-            lambda rd, indent: _handle_layer_dependencies(
-                rd, indent, ['edge [color="red"]', 'node [color="red"]']
-            ),
-        )
+        del cde
     print("}")
 
 
@@ -81,13 +77,13 @@ def _print_layers(targets, components, tasks):
     """
     layer = 0
 
-    def _add_layer(resolved_dependencies, dep_fn):
+    def _add_layer(dep_fn):
         nonlocal layer
 
         indentation = " " * 4
         print("{}subgraph cluster_{} {{".format(indentation, layer))
         print('{}label="Layer {}"'.format(indentation * 2, layer))
-        dep_fn(resolved_dependencies, indentation * 2)
+        dep_fn(indentation * 2)
         print("{}}}".format(indentation))
         layer += 1
 
@@ -115,7 +111,7 @@ def _print_graph(targets, components, tasks):
     components - full configuration for all components in a project
     """
     indentation = " " * 4
-    _do_dot(targets, components, tasks, lambda rd, dep_fn: dep_fn(rd, indentation))
+    _do_dot(targets, components, tasks, lambda dep_fn: dep_fn(indentation))
 
 
 _GRAPH_TOOL = (
