@@ -12,7 +12,7 @@ import devpipeline_core.resolve
 
 def _dotify(string):
     """This function swaps '-' for '_'."""
-    return re.sub("-", lambda m: "_", string)
+    return re.sub("[-/]", lambda m: "_", string)
 
 
 def _do_dot(targets, components, tasks, layer_fn):
@@ -50,13 +50,17 @@ def _do_dot(targets, components, tasks, layer_fn):
                         )
                 else:
                     print("{}{}".format(indentation, _dotify(component_task[0])))
-                task_queue.resolve(component_task)
 
         task_queue = dm.get_queue()
         for component_tasks in task_queue:
             layer_fn(
-                lambda indentation: _print_dependencies(indentation, component_tasks)
+                component_tasks,
+                lambda indentation, resolved: _print_dependencies(
+                    indentation, resolved
+                ),
             )
+            for component_task in component_tasks:
+                task_queue.resolve(component_task)
     except devpipeline_core.resolve.CircularDependencyException as cde:
         del cde
     print("}")
@@ -76,16 +80,31 @@ def _print_layers(targets, components, tasks):
     components - full configuration for all components in a project
     """
     layer = 0
+    expected_count = len(tasks)
+    counts = {}
 
-    def _add_layer(dep_fn):
+    def _add_layer(resolved, dep_fn):
         nonlocal layer
+        nonlocal counts
+        nonlocal expected_count
 
-        indentation = " " * 4
-        print("{}subgraph cluster_{} {{".format(indentation, layer))
-        print('{}label="Layer {}"'.format(indentation * 2, layer))
-        dep_fn(indentation * 2)
-        print("{}}}".format(indentation))
-        layer += 1
+        really_resolved = []
+        for resolved_task in resolved:
+            resolved_component_tasks = counts.get(resolved_task[0], [])
+            resolved_component_tasks.append(resolved_task)
+            if len(resolved_component_tasks) == expected_count:
+                really_resolved.extend(resolved_component_tasks)
+                del counts[resolved_task[0]]
+            else:
+                counts[resolved_task[0]] = resolved_component_tasks
+
+        if really_resolved:
+            indentation = " " * 4
+            print("{}subgraph cluster_{} {{".format(indentation, layer))
+            print('{}label="Layer {}"'.format(indentation * 2, layer))
+            dep_fn(indentation * 2, really_resolved)
+            print("{}}}".format(indentation))
+            layer += 1
 
     _do_dot(targets, components, tasks, _add_layer)
 
@@ -111,7 +130,12 @@ def _print_graph(targets, components, tasks):
     components - full configuration for all components in a project
     """
     indentation = " " * 4
-    _do_dot(targets, components, tasks, lambda dep_fn: dep_fn(indentation))
+    _do_dot(
+        targets,
+        components,
+        tasks,
+        lambda resolved, dep_fn: dep_fn(indentation, resolved),
+    )
 
 
 _GRAPH_TOOL = (
