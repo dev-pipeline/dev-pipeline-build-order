@@ -26,16 +26,36 @@ def _do_dot(targets, components, tasks, layer_fn):
             for dep in component_dependencies:
                 print("{}{} -> {}".format(indent, stripped_name, _dotify(dep)))
 
-    del tasks
     print("digraph dependencies {")
     try:
-        devpipeline_core.resolve.process_dependencies(
-            targets,
-            components,
-            lambda rd: layer_fn(
-                rd, lambda rd, indent: _handle_layer_dependencies(rd, indent, [])
-            ),
-        )
+        def _make_attribute_fn():
+            if len(tasks) > 1:
+                return lambda component_task: ' [label="{}"]'.format(component_task[1])
+            return lambda component_task: ""
+
+        def _print_dependency(component_task, dependent_task, attribute_fn):
+            if component_task[0] != dependent_task[0]:
+                print("    {} -> {}{}".format(_dotify(component_task[0]), _dotify(dependency_task[0]), attribute_fn(component_task)))
+
+        attribute_fn = _make_attribute_fn()
+        dm = devpipeline_core.resolve.calculate_dependencies(targets, components, tasks)
+        task_queue = dm.get_queue()
+        for component_tasks in task_queue:
+            for component_task in component_tasks:
+                dependencies = dm.get_dependencies(component_task)
+                if dependencies:
+                    for dependency_task in dependencies:
+                        _print_dependency(component_task, dependency_task, attribute_fn)
+                else:
+                    print("    {}".format(_dotify(component_task[0])))
+                task_queue.resolve(component_task)
+        #devpipeline_core.resolve.process_dependencies(
+            #targets,
+            #components,
+            #lambda rd: layer_fn(
+                #rd, lambda rd, indent: _handle_layer_dependencies(rd, indent, [])
+            #),
+        #)
     except devpipeline_core.resolve.CircularDependencyException as cde:
         layer_fn(
             cde.components,
