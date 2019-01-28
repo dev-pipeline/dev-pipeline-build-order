@@ -14,11 +14,7 @@ _ORDER_OUTPUTS = devpipeline_core.plugin.query_plugins(
 )
 
 
-def _list_methods(targets, components):
-    # neither argument is required
-    del targets
-    del components
-
+def _list_methods():
     for key in sorted(_ORDER_OUTPUTS):
         print("{} - {}".format(key, _ORDER_OUTPUTS[key][1]))
 
@@ -50,19 +46,20 @@ class BuildOrderer(devpipeline_core.command.TargetCommand):
             help="List the available methods instead of printing dependency information.",
         )
         self.set_version(_STRING)
-        self.helper_fn = None
 
-    def setup(self, arguments):
+    def process(self, arguments):
         if "list_methods" in arguments:
-            self.helper_fn = _list_methods
+            _list_methods()
         else:
-            build_order = _ORDER_OUTPUTS.get(arguments.method)
-            if not build_order:
-                raise Exception("Invalid method: {}".format(arguments.method))
-            self.helper_fn = lambda *args: build_order[0](*args, ["checkout", "build"])
+            super().process(arguments)
 
-    def process(self):
-        self.helper_fn(self.targets, self.components)
+    def process_targets(self, targets, full_config, arguments):
+        del self
+
+        build_order = _ORDER_OUTPUTS.get(arguments.method)
+        if not build_order:
+            raise Exception("Invalid method: {}".format(arguments.method))
+        build_order[0](targets, full_config, ["checkout", "build"])
 
 
 def main(args=None, config_fn=devpipeline_configure.cache.update_cache):
