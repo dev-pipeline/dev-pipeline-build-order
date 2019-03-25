@@ -34,10 +34,18 @@ class BuildOrderer(devpipeline_core.command.TargetCommand):
         super().__init__(
             config_fn=config_fn,
             prog="dev-pipeline build-order",
-            description="Determinte all dependencies of a set of targets and the order they should be built in.",
+            description="Determinte all dependencies of a set of targets and "
+            "the order they should be built in.",
         )
         self.add_argument(
             "--method", help="The method used to display build order.", default="list"
+        )
+        self.add_argument(
+            "--tasks",
+            help="A comma-separated list of tasks to consider.  There will "
+            "be an implicit dependency created on earler tasks (this "
+            "matches the behavior of other commands).",
+            default="build",
         )
         self.add_argument(
             "--list-methods",
@@ -59,7 +67,7 @@ class BuildOrderer(devpipeline_core.command.TargetCommand):
         build_order = _ORDER_OUTPUTS.get(arguments.method)
         if not build_order:
             raise Exception("Invalid method: {}".format(arguments.method))
-        build_order[0](targets, full_config, ["checkout", "build"])
+        build_order[0](targets, full_config, arguments.tasks.split(","))
 
 
 def main(args=None, config_fn=devpipeline_configure.load.update_cache):
